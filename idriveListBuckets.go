@@ -6,8 +6,8 @@ import (
     "fmt"
     "log"
     "context"
-	"os"
-//  "time"
+//	"os"
+  "time"
 
     idrive  "api/idriveAlt/idriveLib"
 
@@ -44,17 +44,19 @@ func main() {
 	}
 
 	log.Printf("client generated!")
-	log.Printf("client:\n%#v\n", minioClient) // minioClient is now set up
+//	log.Printf("client:\n%#v\n", minioClient) // minioClient is now set up
 
-	minioClient.TraceOn(os.Stderr)
+//	minioClient.TraceOn(os.Stderr)
 	buckets, err := minioClient.ListBuckets(context.Background())
 	if err != nil {
     	log.Fatalf("minio ListBuckets: %v", err)
 	}
 
 	fmt.Println("*********** List Buckets ***********")
+	fmt.Printf("Buckets: %d\n", len(buckets))
 	for _, bucket := range buckets {
-    	fmt.Println(bucket)
+		tstr := bucket.CreationDate.Format(time.RFC1123)
+    	fmt.Printf("Name: %-15s Creation Date: %s\n", bucket.Name, tstr)
 	}
 
 }
