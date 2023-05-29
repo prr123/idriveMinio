@@ -1,4 +1,9 @@
-
+// idriveListBuckets.go
+// program that lists all Buckets of the idrive account
+// Author: prr, azul software
+// Date 29 May 2023
+// copyright 2023 prr, azul software
+//
 
 package main
 
@@ -9,7 +14,7 @@ import (
 //	"os"
   "time"
 
-    idrive  "api/idriveAlt/idriveLib"
+    idrive "api/idriveMinio/idriveLib"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
