@@ -1,4 +1,4 @@
-# programs that uses minio to interact with idrive S3 storage
+# programs that use minio to interact with idrive S3 storage
 
 ## upload
 upload is a program that uploads files to a bucket in the idrive
