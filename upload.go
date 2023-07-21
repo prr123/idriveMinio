@@ -12,11 +12,13 @@ import (
     "log"
     "context"
 	"os"
-  "time"
-	"strings"
+  	"time"
+//	"strings"
 
     util "github.com/prr123/utility/utilLib"
     idrive "api/idriveMinio/idriveLib"
+    minioLib "api/idriveMinio/minioLib"
+	
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -70,9 +72,14 @@ func main() {
         fmt.Printf("no buckets listed! bucket flag requires value!")
         fmt.Printf("usage is: %s\n", useStr)
         os.Exit(-1)
-    } else {
-		destBucket = buckval.(string)
+    }
+	if buckval.(string) == "all" || buckval.(string) == "*" {
+        fmt.Printf("error: /bucket value cannot be 'all' or '*'!")
+        fmt.Printf("usage is: %s\n", useStr)
+        os.Exit(-1)
 	}
+
+	destBucket = buckval.(string)
 
     buckList, err := util.ParseList(destBucket)
     if err != nil {log.Fatalf("Buckets ParseList %v",err)}
@@ -80,7 +87,10 @@ func main() {
 	if len(*buckList) > 1 {
 		log.Fatalf("error: /bucket flag has more than one bucket!")
 	}
-	if dbg {util.PrintList(buckList)}
+	if dbg {
+		fmt.Printf("*** Buckets: *****\n")
+		util.PrintList(buckList)
+	}
 
 	upFilnams:=""
     fileval, ok := flagMap["file"]
@@ -90,20 +100,26 @@ func main() {
         os.Exit(-1)
     }
     if fileval.(string) == "none" {
-        fmt.Printf("errorL /file flag has no files listed! file flag requires value!")
+        fmt.Printf("error: /file flag has no files listed! file flag requires value!")
         fmt.Printf("usage is: %s\n", useStr)
         os.Exit(-1)
-    } else {
-		upFilnams = fileval.(string)
+    }
+	if fileval.(string) == "all" || fileval.(string) == "*" {
+        fmt.Printf("error: /file value cannot be 'all' or '*'!")
+        fmt.Printf("usage is: %s\n", useStr)
+        os.Exit(-1)
 	}
+
+	upFilnams = fileval.(string)
+
 
     filNamList, err := util.ParseList(upFilnams)
     if err != nil {log.Fatalf("upFiles ParseList %v",err)}
 
-	if dbg {util.PrintList(filNamList)}
-
-
-	os.Exit(1)
+	if dbg {
+		fmt.Printf("*** Files: *****\n")
+		util.PrintList(filNamList)
+	}
 
 	objB := []byte(os.Args[1])
 	for i:=0; i< len(objB); i++ {
@@ -112,26 +128,22 @@ func main() {
 	objNam := string(objB)
 	srcFilnam := "testData/"
 
+/*
 	log.Printf("source file: %s\n", srcFilnam)
 	log.Printf("objNam: %s\n", objNam)
 	log.Printf("destination Bucket: %s\n", destBucket)
+*/
 
     api, err := idrive.GetIdriveApi("idriveApi.yaml")
     if err != nil {log.Fatalf("getIdriveApi: %v\n", err)}
-    log.Println("success idrive api")
 
     secret, err := idrive.GetSecret()
     if err != nil {log.Fatalf("getSecret: %v\n", err)}
-    log.Printf("secret: %s", secret)
+//    log.Printf("secret: %s", secret)
 
     api.Secret = secret
 
     idrive.PrintApiObj(api)
-
-//	endpoint := api.Url
-//	accessKeyID := api.Key
-//	secretAccessKey := secret
-//	useSSL := true
 
 	// Initialize minio client object.
 	minioClient, err := minio.New(api.Url, &minio.Options{
@@ -139,11 +151,11 @@ func main() {
 		Secure: true,
 	})
 	if err != nil {
-		log.Fatalf("minio New Client: %v",err)
+		log.Fatalf("error: could not create minio client: %v",err)
 	}
 
-	log.Printf("client generated!")
-//	log.Printf("client:\n%#v\n", minioClient) // minioClient is now set up
+    if dbg {log.Println("success creating minio client!")}
+
 
 //	minioClient.TraceOn(os.Stderr)
 	ctx := context.Background()
@@ -152,16 +164,13 @@ func main() {
     	log.Fatalf("minio ListBuckets: %v", err)
 	}
 
-	fmt.Println("*********** List Buckets ***********")
-	fmt.Printf("Buckets: %d\n", len(buckets))
-	found := false
-	for _, bucket := range buckets {
-		tstr := bucket.CreationDate.Format(time.RFC1123)
-    	fmt.Printf("Name: %-15s Creation Date: %s\n", bucket.Name, tstr)
-		idx := strings.Index(bucket.Name, destBucket)
-		if idx > -1 {found = true; break;}
-	}
-	if !found { log.Fatalf("destBucket is not in  bucket list!\n")}
+	// test buckets
+	err = minioLib.FindBuckets(buckList, buckets)
+	if err != nil {log.Fatalf("no match between cli bucketlist! %v", err)}
+	// test files
+
+
+	os.Exit(1)
 
 	srcFil, err := os.Open(srcFilnam)
 	if err != nil {log.Fatalf("os.Open:%v", err)}
