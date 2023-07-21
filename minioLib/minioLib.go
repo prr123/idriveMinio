@@ -10,6 +10,7 @@ package minioLib
 import (
 	"fmt"
 //	"log"
+	"time"
 
     "github.com/minio/minio-go/v7"
 )
@@ -31,4 +32,22 @@ func FindBuckets(tgtList *[]string, srcList []minio.BucketInfo) (err error){
         }
     }
     return nil
+}
+
+
+func PrintObjInfo(info *minio.ObjectInfo) {
+    fmt.Printf("******** object info **********\n")
+//  fmt.Printf("Bucket: %s\n", info.Bucket)
+    fmt.Printf("Version ID: %s\n", info.VersionID)
+    fmt.Printf("Key: %s\n", info.Key)
+    fmt.Printf("Etag: %s\n", info.ETag)
+    fmt.Printf("Size: %d\n", info.Size)
+    fmt.Printf("Mod:  %s\n", info.LastModified.Format(time.RFC1123))
+    fmt.Printf("Exp:  %s\n", info.Expires.Format(time.RFC1123))
+    fmt.Printf("UserMetaData[%d]:\n", len(info.UserMetadata))
+    for key, val := range info.UserMetadata {
+        fmt.Printf("  key: %s val: %s\n", key, val)
+    }
+    owner := info.Owner
+    fmt.Printf(" XMLName: %v DisplayName: %s ID %s\n", owner.XMLName, owner.DisplayName, owner.ID)
 }
