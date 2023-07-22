@@ -18,7 +18,7 @@ import (
     util "github.com/prr123/utility/utilLib"
     idrive "api/idriveMinio/idriveLib"
     minioLib "api/idriveMinio/minioLib"
-	
+
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -166,9 +166,19 @@ func main() {
 
 	// test buckets
 	err = minioLib.FindBuckets(buckList, buckets)
-	if err != nil {log.Fatalf("no match between cli bucketlist! %v", err)}
-	// test files
+	if err != nil {log.Fatalf("no match between cli and bucketlist! %v", err)}
+	log.Printf("buckets found!\n")
 
+	// test files
+	for i:=0; i<len(*filNamList); i++ {
+		filnam := "testData/" + (*filNamList)[i]
+		info, err := os.Stat(filnam)
+		if err != nil { 
+			log.Printf("file %s does not exist: %v\n", filnam, err)
+			continue
+		}
+		log.Printf("file: %s size: %d\n", filnam, info.Size())
+	}
 
 	os.Exit(1)
 
