@@ -47,8 +47,8 @@ func PrintObjInfo(info *minio.ObjectInfo) {
     fmt.Printf("MetaData keys[%d]:\n", len(info.Metadata))
 
     for key, val := range info.Metadata {
-        fmt.Printf("  key: %s values[%d]: ", key. len(val))
-			for j:=0, j<len(val); j++ {
+        fmt.Printf("  key: %s values[%d]: ", key, len(val))
+			for j:=0; j<len(val); j++ {
 				fmt.Printf("%s", val[j])
 			}
 		fmt.Println()
