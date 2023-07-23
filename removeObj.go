@@ -1,4 +1,4 @@
-// uploadFile.go
+// removeObj.go
 // program that lists all Buckets of the idrive account
 // Author: prr, azul software
 // Date 23 July 2023
@@ -28,10 +28,10 @@ func main() {
 
 	numArgs := len(os.Args)
 
-	useStr := "uploadFile [/file=file] [/bucket=bucket] [tags=tag.yaml] [/db]"
-	helpStr := "program that uploads a file\n  requires: /file and /bucket flags\n"
+	useStr := "removeObj [/obj=objname] [/bucket=bucket] [/db]"
+	helpStr := "program that removes an object from a bucket\n  requires: /obj and /bucket flags\n"
 
-	flags := []string{"file", "bucket", "tags", "dbg"}
+	flags := []string{"obj", "bucket", "dbg"}
 	dbg := false
 
 	if numArgs <2  {
@@ -92,32 +92,32 @@ func main() {
 		util.PrintList(buckList)
 	}
 
-	upFilnams:=""
+	objNames:=""
 //	multiFiles := false
-    fileval, ok := flagMap["file"]
+    objval, ok := flagMap["obj"]
     if !ok  {
         fmt.Printf("error: no file flag! file flag is required!")
         fmt.Printf("usage is: %s\n", useStr)
         os.Exit(-1)
     }
-    if fileval.(string) == "none" {
-        fmt.Printf("error: /file flag has no files listed! file flag requires value!")
+    if objval.(string) == "none" {
+        fmt.Printf("error: /obj flag has no objects listed! obj flag requires a value!")
         fmt.Printf("usage is: %s\n", useStr)
         os.Exit(-1)
     }
-	if fileval.(string) == "all" || fileval.(string) == "*" {
-        fmt.Printf("error: /file flag has a value of all! Only one file is allowed!")
+	if objval.(string) == "all" || objval.(string) == "*" {
+        fmt.Printf("error: /obj flag has a value of all! Only one obj is allowed!")
         fmt.Printf("usage is: %s\n", useStr)
         os.Exit(-1)
 	}
 
-	upFilnams = fileval.(string)
+	objNames = objval.(string)
 
-	var filNamList *[]string
-    filNamList, err = util.ParseList(upFilnams)
-    if err != nil {log.Fatalf("upFiles ParseList %v",err)}
-	if len(*filNamList) > 1 {
-        fmt.Printf("error: /file flag has as value multiple files! Only one file is allowed!")
+	var objList *[]string
+    objList, err = util.ParseList(objNames)
+    if err != nil {log.Fatalf("objNames ParseList %v",err)}
+	if len(*objList) > 1 {
+        fmt.Printf("error: /obj flag has as value multiple objects! Only one object is allowed!")
         fmt.Printf("usage is: %s\n", useStr)
         os.Exit(-1)
 	}
@@ -126,18 +126,10 @@ func main() {
 
 	if dbg {
 		fmt.Printf("*** Files: *****\n")
-		util.PrintList(filNamList)
+		util.PrintList(objList)
 	}
 
-/*
-	objB := []byte(os.Args[1])
-	for i:=0; i< len(objB); i++ {
-		if objB[i] == '.' {objB[i] = '_'}
-	}
-	objNam := string(objB)
-*/
-	srcFilnam := "testData/"
-
+	tgtFilnam := "testData/"
 
     api, err := idrive.GetIdriveApi("idriveApi.yaml")
     if err != nil {log.Fatalf("getIdriveApi: %v\n", err)}
@@ -176,7 +168,7 @@ func main() {
 
 	// test files
 
-	srcFilnam = "testData/" + (*filNamList)[0]
+	tgtFilnam = "testData/" + (*objList)[0]
 	info, err := os.Stat(srcFilnam)
 	if err != nil {
 		log.Fatalf("upload file %s does not exist: %v\n", srcFilnam, err)
