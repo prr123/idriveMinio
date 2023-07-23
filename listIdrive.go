@@ -168,7 +168,7 @@ func main() {
 	}
 
 	for i:=0; i< len(*buckList); i++ {
-		log.Printf("objects for bucket '%s'\n")
+		log.Printf("objects for bucket '%s'\n", (*buckList)[i])
 		objChan := minioClient.ListObjects(ctx, (*buckList)[i], opt)
 		if err != nil {log.Fatalf("ListObjects of bucket %s: %v", (*buckList)[i], err)}
 
@@ -179,7 +179,7 @@ func main() {
 			if obj.Err != nil {
 				fmt.Printf("object error: %v\n", obj.Err)
 			}
-			fmt.Printf("Object[%d]: \n", count+1)
+			fmt.Printf("Object[%d]:\n", count+1)
 			minioLib.PrintObjInfo(&obj)
 			count++
 		}
