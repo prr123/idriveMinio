@@ -158,7 +158,7 @@ func main() {
 	}
 	fmt.Printf("****** Bucket List[%d] ********\n", len(*buckList))
 	util.PrintList(buckList)
-	fmt.Printf("****** End Bucket List ********\n", len(*buckList))
+	fmt.Printf("****** End Bucket List ********\n")
 
 	log.Printf("all cli bucket names found in retrieved bucketlist!\n")
 	if dispObj == 0 {os.Exit(1)}
