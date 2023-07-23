@@ -12,7 +12,7 @@ import (
     "log"
     "context"
 	"os"
-  	"time"
+//  	"time"
 //	"strings"
 
     util "github.com/prr123/utility/utilLib"
@@ -93,7 +93,7 @@ func main() {
 	}
 
 	upFilnams:=""
-	multiFiles := false
+//	multiFiles := false
     fileval, ok := flagMap["file"]
     if !ok  {
         fmt.Printf("error: no file flag! file flag is required!")
@@ -129,11 +129,13 @@ func main() {
 		util.PrintList(filNamList)
 	}
 
+/*
 	objB := []byte(os.Args[1])
 	for i:=0; i< len(objB); i++ {
 		if objB[i] == '.' {objB[i] = '_'}
 	}
 	objNam := string(objB)
+*/
 	srcFilnam := "testData/"
 
 
@@ -174,14 +176,14 @@ func main() {
 
 	// test files
 
-	srcFilnam := "testData/" + (*filNamList)[0]
+	srcFilnam = "testData/" + (*filNamList)[0]
 	info, err := os.Stat(srcFilnam)
 	if err != nil {
 		log.Fatalf("upload file %s does not exist: %v\n", srcFilnam, err)
 	}
 	log.Printf("upload file: %s size: %d\n", srcFilnam, info.Size())
 
-	os.Exit(1)
+//	os.Exit(1)
 
 	srcFil, err := os.Open(srcFilnam)
 	if err != nil {log.Fatalf("os.Open:%v", err)}
@@ -193,6 +195,8 @@ func main() {
 	log.Printf("fils size: %d\n", fileStat.Size())
 
 	opt := minio.PutObjectOptions{ContentType:"application/octet-stream"}
+
+	objNam :=  (*filNamList)[0]
 
 	uploadInfo, err := minioClient.PutObject(ctx, destBucket, objNam, srcFil, fileStat.Size(), opt)
 	if err != nil {log.Fatalf("PutObject: %v", err)}
