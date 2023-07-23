@@ -12,12 +12,13 @@ import (
     "log"
     "context"
 	"os"
-	"time"
+//	"time"
 //	"strings"
 
-    util "github.com/prr123/utility/utilLib"
+	minioLib "api/idriveMinio/minioLib"
     idrive "api/idriveMinio/idriveLib"
 
+    util "github.com/prr123/utility/utilLib"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
@@ -59,28 +60,31 @@ func main() {
         }
     }
 
+	destBucket := "*"
 	buckval, ok := flagMap["bucket"]
 	if !ok  {
 		fmt.Printf("no bucket flag! bucket flag is required!")
         fmt.Printf("usage is: %s\n", useStr)
         os.Exit(-1)
 	}
-	if buckval.(string) == "none" {
-		fmt.Printf("no buckets listed! bucket flag requires value!")
-        fmt.Printf("usage is: %s\n", useStr)
-        os.Exit(-1)
+	if buckval.(string) == "none" || buckval.(string) == "all" {
+		destBucket = "*"
+	} else {
+		destBucket = buckval.(string)
 	}
-
-	destBucket := buckval.(string)
 
 	if dbg {
 		log.Printf("destination Bucket: %s\n", destBucket)
 	}
 
-	buckList, err := ParseList(destBucket)
-	if err != nil {log.Fatalf("ParseList %v",err)}
+	bL := []string{}
+	buckList := &bL
+	if destBucket != "*" {
+		buckList, err = util.ParseList(destBucket)
+		if err != nil {log.Fatalf("ParseList %v",err)}
+		if dbg {util.PrintList(buckList)}
+	}
 
-	if dbg {PrintList(buckList)}
 
 	dispObj := 0
 	objval, ok := flagMap["obj"]
@@ -101,9 +105,9 @@ func main() {
 	}
 
 	if dispObj > 0 {
-		objList, err := ParseList(destObj)
+		objList, err := util.ParseList(destObj)
 		if err != nil {log.Fatalf("ParseList %v",err)}
-		if dbg {PrintList(objList)}
+		if dbg {util.PrintList(objList)}
 	}
 
     api, err := idrive.GetIdriveApi("idriveApi.yaml")
@@ -139,12 +143,22 @@ func main() {
 	if err != nil {
     	log.Fatalf("minio ListBuckets: %v", err)
 	}
-	if dbg {PrintBuckets(buckets)}
+	if dbg {minioLib.PrintBuckets(buckets)}
 
-	if destBucket != "*" || destBucket != "all" {
-		err = FindBuckets(buckList, buckets)
+
+	if destBucket == "*" {
+		bL:= make([]string, len(buckets))
+		for i:=0; i<len(buckets); i++ {
+			bL[i] = buckets[i].Name
+		}
+		buckList = &bL
+	} else {
+		err = minioLib.FindBuckets(buckList, buckets)
 		if err != nil {log.Fatalf("no match between cli bucketlist! %v", err)}
 	}
+	fmt.Printf("****** Bucket List[%d] ********\n", len(*buckList))
+	util.PrintList(buckList)
+	fmt.Printf("****** End Bucket List ********\n", len(*buckList))
 
 	log.Printf("all cli bucket names found in retrieved bucketlist!\n")
 	if dispObj == 0 {os.Exit(1)}
@@ -166,97 +180,20 @@ func main() {
 				fmt.Printf("object error: %v\n", obj.Err)
 			}
 			fmt.Printf("Object[%d]: \n", count+1)
-			PrintObjInfo(&obj)
+			minioLib.PrintObjInfo(&obj)
 			count++
-//		if count == 1 {obj1 = obj}
+		}
+	}
 
+/*
 	// metadata
 			fmt.Println("************ Object Metadata *************")
 			objInfo, err := minioClient.StatObject(ctx, (*buckList)[i], obj.Key, minio.StatObjectOptions{})
 			if err != nil {log.Fatalf("StatObject: %v", err)}
 			PrintObjInfo(&objInfo)
-		}
-	}
+
+*/
 	log.Println("Successfully listed objects!")
 
 }
 
-func PrintObjInfo(info *minio.ObjectInfo) {
-	fmt.Printf("******** object info **********\n")
-//	fmt.Printf("Bucket: %s\n", info.Bucket)
-	fmt.Printf("Version ID: %s\n", info.VersionID)
-	fmt.Printf("Key: %s\n", info.Key)
-	fmt.Printf("Etag: %s\n", info.ETag)
-	fmt.Printf("Size: %d\n", info.Size)
-	fmt.Printf("Mod:  %s\n", info.LastModified.Format(time.RFC1123))
-	fmt.Printf("Exp:  %s\n", info.Expires.Format(time.RFC1123))
-	fmt.Printf("UserMetaData[%d]:\n", len(info.UserMetadata))
-	for key, val := range info.UserMetadata {
-		fmt.Printf("  key: %s val: %s\n", key, val)
-	}
-	owner := info.Owner
-	fmt.Printf(" XMLName: %v DisplayName: %s ID %s\n", owner.XMLName, owner.DisplayName, owner.ID)
-}
-
-func PrintBuckets(buckets []minio.BucketInfo) {
-	fmt.Println("*********** List Buckets ***********")
-	fmt.Printf("Buckets: %d\n", len(buckets))
-//	found := false
-	for _, bucket := range buckets {
-		tstr := bucket.CreationDate.Format(time.RFC1123)
-    	fmt.Printf("Name: %-15s Creation Date: %s\n", bucket.Name, tstr)
-//		idx := strings.Index(bucket.Name, destBucket)
-//		if idx > -1 {found = true; break;}
-	}
-//	if !found { log.Fatalf("destBucket is not in  bucket list!\n")}
-	fmt.Println("********* End List Buckets *********")
-
-}
-
-func ParseList(src string)(dest *[]string, err error) {
-
-	var list [10]string
-	count:= 0
-	stPos:=0
-	for i:=0; i< len(src); i++ {
-		if src[i] == ',' {
-			list[count] = string(src[stPos:i])
-			stPos = i+1
-			count++
-		}
-	}
-
-	list[count] = string(src[stPos:])
-	count++
-	lp := list[:count]
-
-	return &lp, nil
-}
-
-func PrintList (list *[]string) {
-
-	fmt.Printf("items: %d\n", len(*list))
-	for i:=0; i< len(*list); i++ {
-		fmt.Printf("%d: %s\n", i+1, (*list)[i])
-	}
-
-}
-
-func FindBuckets(tgtList *[]string, srcList []minio.BucketInfo) (err error){
-
-	for i:=0; i< len(*tgtList); i++ {
-		tgtNam := (*tgtList)[i]
-		found := false
-		for j:=0; j< len(srcList); j++ {
-//	fmt.Printf("%d: %s\n", j+1, srcList[j].Name)
-			if tgtNam == srcList[j].Name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return fmt.Errorf("tgtNam: %s not found in SourceList!", tgtNam)
-		}
-	}
-	return nil
-}
