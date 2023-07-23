@@ -12,6 +12,7 @@ import (
     "log"
     "context"
 	"os"
+	"io"
 //  	"time"
 //	"strings"
 
@@ -205,23 +206,29 @@ func main() {
 
 //	os.Exit(1)
 
-	tgtFil, err := os.Open(tgtFilnam)
-	if err != nil {log.Fatalf("os.Open:%v", err)}
+	tgtFil, err := os.Create(tgtFilnam)
+	if err != nil {log.Fatalf("os.Create:%v", err)}
 	defer tgtFil.Close()
 
-
+/*
 	fileStat, err :=  tgtFil.Stat()
 	if err != nil {log.Fatalf("file.Stat: %v", err)}
 	log.Printf("fils size: %d\n", fileStat.Size())
+*/
+	opt := minio.GetObjectOptions{}
 
-	opt := minio.GetObjectOptions{ContentType:"application/octet-stream"}
+	objNam :=  (*objList)[0]
 
-	objNam :=  (*filNamList)[0]
+	object, err := minioClient.GetObject(ctx, destBucket, objNam, opt)
+	if err != nil {log.Fatalf("GetObject: %v", err)}
+	defer object.Close()
 
-	downloadInfo, err := minioClient.GetObject(ctx, destBucket, objNam, opt)
-	if err != nil {log.Fatalf("PutObject: %v", err)}
+//	minioLib.PrintDownloadInfo(&downloadInfo)
+	_, err = io.Copy(tgtFil, object)
+	if err != nil {
+    	log.Fatalf("io.Copy: %v\n", err)
+	}
 
-	minioLib.PrintUploadInfo(&uploadInfo)
-	log.Println("Successfully uploaded file")
+	log.Println("Successfully downloaded object")
 
 }
