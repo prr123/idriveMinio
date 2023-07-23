@@ -1,4 +1,4 @@
-// removeObj.go
+// downloadObj.go
 // program that lists all Buckets of the idrive account
 // Author: prr, azul software
 // Date 23 July 2023
@@ -28,11 +28,12 @@ func main() {
 
 	numArgs := len(os.Args)
 
-	useStr := "removeObj [/obj=objname] [/bucket=bucket] [/db]"
+	useStr := "downloadObj [/obj=objname] [/bucket=bucket] [/file=filenam] [/db]"
 	helpStr := "program that removes an object from a bucket\n  requires: /obj and /bucket flags\n"
 
-	flags := []string{"obj", "bucket", "dbg"}
+	flags := []string{"obj", "bucket", "file","dbg"}
 	dbg := false
+	tgtFolder := "testDl/"
 
 	if numArgs <2  {
 		fmt.Printf("usage: %s\n", useStr)
@@ -92,6 +93,35 @@ func main() {
 		util.PrintList(buckList)
 	}
 
+    tgtFilnam:=""
+//  multiFiles := false
+    fileval, ok := flagMap["file"]
+    if !ok  {
+        fmt.Printf("error: no file flag! file flag is required!")
+        fmt.Printf("usage is: %s\n", useStr)
+        os.Exit(-1)
+    }
+    if fileval.(string) == "none" {
+        fmt.Printf("error: /file flag has no files listed! file flag requires value!")
+        fmt.Printf("usage is: %s\n", useStr)
+        os.Exit(-1)
+    }
+    if fileval.(string) == "all" || fileval.(string) == "*" {
+        fmt.Printf("error: /file flag has a value of all! Only one file is allowed!")
+        fmt.Printf("usage is: %s\n", useStr)
+        os.Exit(-1)
+    }
+
+    tgtFilnam = fileval.(string)
+    var filNamList *[]string
+    filNamList, err = util.ParseList(tgtFilnam)
+    if err != nil {log.Fatalf("target Files ParseList %v",err)}
+    if len(*filNamList) > 1 {
+        fmt.Printf("error: /file flag has as value multiple files! Only one file is allowed!")
+        fmt.Printf("usage is: %s\n", useStr)
+        os.Exit(-1)
+    }
+
 	objNames:=""
 //	multiFiles := false
     objval, ok := flagMap["obj"]
@@ -128,8 +158,6 @@ func main() {
 		fmt.Printf("*** Files: *****\n")
 		util.PrintList(objList)
 	}
-
-	tgtFilnam := "testData/"
 
     api, err := idrive.GetIdriveApi("idriveApi.yaml")
     if err != nil {log.Fatalf("getIdriveApi: %v\n", err)}
@@ -168,29 +196,29 @@ func main() {
 
 	// test files
 
-	tgtFilnam = "testData/" + (*objList)[0]
-	info, err := os.Stat(srcFilnam)
+	tgtFilnam = tgtFolder + (*filNamList)[0]
+	info, err := os.Stat(tgtFilnam)
 	if err != nil {
-		log.Fatalf("upload file %s does not exist: %v\n", srcFilnam, err)
+		log.Fatalf("upload file %s does not exist: %v\n", tgtFilnam, err)
 	}
-	log.Printf("upload file: %s size: %d\n", srcFilnam, info.Size())
+	log.Printf("upload file: %s size: %d\n", tgtFilnam, info.Size())
 
 //	os.Exit(1)
 
-	srcFil, err := os.Open(srcFilnam)
+	tgtFil, err := os.Open(tgtFilnam)
 	if err != nil {log.Fatalf("os.Open:%v", err)}
-	defer srcFil.Close()
+	defer tgtFil.Close()
 
 
-	fileStat, err :=  srcFil.Stat()
+	fileStat, err :=  tgtFil.Stat()
 	if err != nil {log.Fatalf("file.Stat: %v", err)}
 	log.Printf("fils size: %d\n", fileStat.Size())
 
-	opt := minio.PutObjectOptions{ContentType:"application/octet-stream"}
+	opt := minio.GetObjectOptions{ContentType:"application/octet-stream"}
 
 	objNam :=  (*filNamList)[0]
 
-	uploadInfo, err := minioClient.PutObject(ctx, destBucket, objNam, srcFil, fileStat.Size(), opt)
+	downloadInfo, err := minioClient.GetObject(ctx, destBucket, objNam, opt)
 	if err != nil {log.Fatalf("PutObject: %v", err)}
 
 	minioLib.PrintUploadInfo(&uploadInfo)
