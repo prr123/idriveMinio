@@ -197,16 +197,7 @@ func main() {
 	uploadInfo, err := minioClient.PutObject(ctx, destBucket, objNam, srcFil, fileStat.Size(), opt)
 	if err != nil {log.Fatalf("PutObject: %v", err)}
 
-	PrintUploadInfo(&uploadInfo)
+	minioLib.PrintUploadInfo(&uploadInfo)
 	log.Println("Successfully uploaded file")
 
-}
-
-func PrintUploadInfo(info *minio.UploadInfo) {
-	fmt.Printf("*** upload info ***\n")
-	fmt.Printf("Bucket: %s\n", info.Bucket)
-	fmt.Printf("Etag: %s\n", info.ETag)
-	fmt.Printf("Size: %d\n", info.Size)
-	fmt.Printf("Mod:  %s\n", info.LastModified.Format(time.RFC1123))
-	fmt.Printf("Version ID: %s\n", info.VersionID)
 }
