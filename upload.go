@@ -93,6 +93,7 @@ func main() {
 	}
 
 	upFilnams:=""
+	multiFiles := false
     fileval, ok := flagMap["file"]
     if !ok  {
         fmt.Printf("error: no file flag! file flag is required!")
@@ -105,15 +106,13 @@ func main() {
         os.Exit(-1)
     }
 	if fileval.(string) == "all" || fileval.(string) == "*" {
-        fmt.Printf("error: /file value cannot be 'all' or '*'!")
-        fmt.Printf("usage is: %s\n", useStr)
-        os.Exit(-1)
+		multiFiles = true
 	}
 
 	upFilnams = fileval.(string)
 
-
-    filNamList, err := util.ParseList(upFilnams)
+	var filNamList *[]string
+    filNamList, err = util.ParseList(upFilnams)
     if err != nil {log.Fatalf("upFiles ParseList %v",err)}
 
 	if dbg {
@@ -170,15 +169,36 @@ func main() {
 	log.Printf("buckets found!\n")
 
 	// test files
+
+
+	if multiFiles {
+		filNames := make([]string, 10)
+		files, err := os.ReadDir("testData/")
+		if err != nil {log.Fatalf("readDir 'testData': %v",err)}
+
+		count:=0
+		for _, file := range files {
+			if dbg {fmt.Println(file.Name(), file.IsDir())}
+			if file.IsDir() {continue}
+			filNames[count] = file.Name()
+			count++
+			if count > 9 {log.Fatalf("too many files!")}
+		}
+		lp:= filNames[:count]
+		filNamList = &lp
+
+	}
+
 	for i:=0; i<len(*filNamList); i++ {
 		filnam := "testData/" + (*filNamList)[i]
 		info, err := os.Stat(filnam)
-		if err != nil { 
+		if err != nil {
 			log.Printf("file %s does not exist: %v\n", filnam, err)
 			continue
 		}
 		log.Printf("file: %s size: %d\n", filnam, info.Size())
 	}
+
 
 	os.Exit(1)
 
