@@ -36,18 +36,40 @@ func FindBuckets(tgtList *[]string, srcList []minio.BucketInfo) (err error){
 
 
 func PrintObjInfo(info *minio.ObjectInfo) {
-    fmt.Printf("******** object info **********\n")
-//  fmt.Printf("Bucket: %s\n", info.Bucket)
+    fmt.Printf("********** object info ************\n")
     fmt.Printf("Version ID: %s\n", info.VersionID)
     fmt.Printf("Key: %s\n", info.Key)
     fmt.Printf("Etag: %s\n", info.ETag)
     fmt.Printf("Size: %d\n", info.Size)
     fmt.Printf("Mod:  %s\n", info.LastModified.Format(time.RFC1123))
     fmt.Printf("Exp:  %s\n", info.Expires.Format(time.RFC1123))
-    fmt.Printf("UserMetaData[%d]:\n", len(info.UserMetadata))
-    for key, val := range info.UserMetadata {
-        fmt.Printf("  key: %s val: %s\n", key, val)
+
+    fmt.Printf("MetaData keys[%d]:\n", len(info.Metadata))
+
+    for key, val := range info.Metadata {
+        fmt.Printf("  key: %s values[%d]: ", key. len(val))
+			for j:=0, j<len(val); j++ {
+				fmt.Printf("%s", val[j])
+			}
+		fmt.Println()
+    }
+
+    fmt.Printf("UserMetaData keys: %d\n", len(info.UserMetadata))
+    for ukey, uval := range info.UserMetadata {
+        fmt.Printf("  key: %s val: %s\n", ukey, uval)
     }
     owner := info.Owner
-    fmt.Printf(" XMLName: %v DisplayName: %s ID %s\n", owner.XMLName, owner.DisplayName, owner.ID)
+	fmt.Printf("Owner:\n")
+    fmt.Printf("  XMLName: %v\n  DisplayName: %s\n  ID: %s\n", owner.XMLName, owner.DisplayName, owner.ID)
+    fmt.Printf("******** end object info **********\n")
+}
+
+func PrintBuckets(buckets []minio.BucketInfo) {
+    fmt.Println("*********** List Buckets ***********")
+    fmt.Printf("Buckets: %d\n", len(buckets))
+    for _, bucket := range buckets {
+        tstr := bucket.CreationDate.Format(time.RFC1123)
+        fmt.Printf("Name: %-15s Creation Date: %s\n", bucket.Name, tstr)
+    }
+    fmt.Println("********* End List Buckets *********")
 }
