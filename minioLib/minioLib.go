@@ -84,12 +84,12 @@ func PrintUploadInfo(info *minio.UploadInfo) {
     fmt.Printf("******* end upload info ******\n")
 }
 
-func PrintDownloadInfo(info *minio.DownloadInfo) {
-    fmt.Printf("****** download info *********\n")
+//func PrintDownloadInfo(info *minio.DownloadInfo) {
+//    fmt.Printf("****** download info *********\n")
 //    fmt.Printf("Bucket: %s\n", info.Bucket)
 //    fmt.Printf("Etag: %s\n", info.ETag)
 //    fmt.Printf("Size: %d\n", info.Size)
 //    fmt.Printf("Mod:  %s\n", info.LastModified.Format(time.RFC1123))
 //    fmt.Printf("Version ID: %s\n", info.VersionID)
-    fmt.Printf("**** end download info *******\n")
-}
+//    fmt.Printf("**** end download info *******\n")
+//}
