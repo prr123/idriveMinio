@@ -129,7 +129,7 @@ func main() {
 		util.PrintList(objList)
 	}
 
-	tgtFilnam := "testData/"
+//	tgtFilnam := "testData/"
 
     api, err := idrive.GetIdriveApi("idriveApi.yaml")
     if err != nil {log.Fatalf("getIdriveApi: %v\n", err)}
@@ -166,34 +166,18 @@ func main() {
 	if err != nil {log.Fatalf("no match between cli and bucketlist! %v", err)}
 	log.Printf("buckets found!\n")
 
-	// test files
+	objNam :=  (*objList)[0]
+	buckNam:= (*buckList)[0]
 
-	tgtFilnam = "testData/" + (*objList)[0]
-	info, err := os.Stat(srcFilnam)
-	if err != nil {
-		log.Fatalf("upload file %s does not exist: %v\n", srcFilnam, err)
-	}
-	log.Printf("upload file: %s size: %d\n", srcFilnam, info.Size())
+	remOpts := minio.RemoveObjectOptions {
+		GovernanceBypass: true,
+//		VersionID: "myversionid",
+		}
 
-//	os.Exit(1)
+	if dbg {log.Printf("removing object %s from bucket %s\n", objNam, buckNam)}
+	err = minioClient.RemoveObject(ctx, buckNam, objNam, remOpts)
+	if err != nil { log.Fatalf("error ReomveObject: %v", err)}
 
-	srcFil, err := os.Open(srcFilnam)
-	if err != nil {log.Fatalf("os.Open:%v", err)}
-	defer srcFil.Close()
-
-
-	fileStat, err :=  srcFil.Stat()
-	if err != nil {log.Fatalf("file.Stat: %v", err)}
-	log.Printf("fils size: %d\n", fileStat.Size())
-
-	opt := minio.PutObjectOptions{ContentType:"application/octet-stream"}
-
-	objNam :=  (*filNamList)[0]
-
-	uploadInfo, err := minioClient.PutObject(ctx, destBucket, objNam, srcFil, fileStat.Size(), opt)
-	if err != nil {log.Fatalf("PutObject: %v", err)}
-
-	minioLib.PrintUploadInfo(&uploadInfo)
-	log.Println("Successfully uploaded file")
+	log.Println("Successfully deleted object")
 
 }
