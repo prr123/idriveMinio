@@ -30,7 +30,7 @@ func main() {
 	numArgs := len(os.Args)
 
 	useStr := "downloadObj [/obj=objname] [/bucket=bucket] [/file=filenam] [/db]"
-	helpStr := "program that removes an object from a bucket\n  requires: /obj and /bucket flags\n"
+	helpStr := "program that downloads an object from a bucket to the spcified file\n  requires: /file, /obj and /bucket flags\n"
 
 	flags := []string{"obj", "bucket", "file","dbg"}
 	dbg := false
@@ -161,10 +161,10 @@ func main() {
 	}
 
     api, err := idrive.GetIdriveApi("idriveApi.yaml")
-    if err != nil {log.Fatalf("getIdriveApi: %v\n", err)}
+    if err != nil {log.Fatalf("error -- getIdriveApi: %v\n", err)}
 
     secret, err := idrive.GetSecret()
-    if err != nil {log.Fatalf("getSecret: %v\n", err)}
+    if err != nil {log.Fatalf("error -- getSecret: %v\n", err)}
 //    log.Printf("secret: %s", secret)
 
     api.Secret = secret
@@ -177,7 +177,7 @@ func main() {
 		Secure: true,
 	})
 	if err != nil {
-		log.Fatalf("error: could not create minio client: %v",err)
+		log.Fatalf("error -- could not create minio client: %v",err)
 	}
 
     if dbg {log.Println("success creating minio client!")}
@@ -186,47 +186,36 @@ func main() {
 //	minioClient.TraceOn(os.Stderr)
 	ctx := context.Background()
 	buckets, err := minioClient.ListBuckets(ctx)
-	if err != nil {
-    	log.Fatalf("minio ListBuckets: %v", err)
-	}
+	if err != nil {log.Fatalf("error -- ListBuckets: %v", err)}
 
 	// test buckets
 	err = minioLib.FindBuckets(buckList, buckets)
-	if err != nil {log.Fatalf("no match between cli and bucketlist! %v", err)}
+	if err != nil {log.Fatalf("error -- no match between cli and bucketlist! %v", err)}
 	log.Printf("buckets found!\n")
 
 	// test files
 
 	tgtFilnam = tgtFolder + (*filNamList)[0]
-	info, err := os.Stat(tgtFilnam)
-	if err != nil {
-		log.Fatalf("upload file %s does not exist: %v\n", tgtFilnam, err)
+	_, err = os.Stat(tgtFilnam)
+	if err == nil {
+		log.Fatalf("error -- download file %s does already exist: %v\n", tgtFilnam, err)
 	}
-	log.Printf("upload file: %s size: %d\n", tgtFilnam, info.Size())
-
-//	os.Exit(1)
 
 	tgtFil, err := os.Create(tgtFilnam)
-	if err != nil {log.Fatalf("os.Create:%v", err)}
+	if err != nil {log.Fatalf("error -- os.Create tgtFilnam:%v", err)}
 	defer tgtFil.Close()
 
-/*
-	fileStat, err :=  tgtFil.Stat()
-	if err != nil {log.Fatalf("file.Stat: %v", err)}
-	log.Printf("fils size: %d\n", fileStat.Size())
-*/
 	opt := minio.GetObjectOptions{}
 
 	objNam :=  (*objList)[0]
 
 	object, err := minioClient.GetObject(ctx, destBucket, objNam, opt)
-	if err != nil {log.Fatalf("GetObject: %v", err)}
+	if err != nil {log.Fatalf("error -- GetObject: %v", err)}
 	defer object.Close()
 
-//	minioLib.PrintDownloadInfo(&downloadInfo)
 	_, err = io.Copy(tgtFil, object)
 	if err != nil {
-    	log.Fatalf("io.Copy: %v\n", err)
+    	log.Fatalf("error -- io.Copy obj to tgtfil: %v\n", err)
 	}
 
 	log.Println("Successfully downloaded object")
